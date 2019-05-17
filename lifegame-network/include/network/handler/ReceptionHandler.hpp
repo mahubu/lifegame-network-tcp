@@ -1,7 +1,7 @@
 #pragma once
 
 #include <network/Sockets.hpp>
-#include <network/message/Message.hpp>
+#include <network/event/Event.hpp>
 #include <memory>
 #include <vector>
 
@@ -37,7 +37,7 @@ namespace network
 			*
 			* @return a message. 'nullptr' if no message has been received.
 			*/
-			std::unique_ptr<message::Message> receive();
+			std::unique_ptr<event::Event> receive();
 
 		private:
 			// TODO remove these private methods from the header ?
@@ -45,7 +45,7 @@ namespace network
 			void prepareDataReception();
 			void prepareReception(unsigned int expectedLength, State state);
 
-			std::vector<char> buffer_;
+			std::vector<PacketUnit> buffer_;
 			unsigned int received_ = 0;
 			SOCKET socket_ = INVALID_SOCKET;
 			State state_ = State::Header;

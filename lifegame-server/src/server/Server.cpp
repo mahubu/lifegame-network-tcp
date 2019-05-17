@@ -1,7 +1,8 @@
 #include <server/Server.hpp>
 #include <network/Client.hpp>
-#include <network/message/Connection.hpp>
-#include <network/message/Disconnection.hpp>
+#include <network/event/Connection.hpp>
+#include <network/event/Disconnection.hpp>
+#include <network/event/Exchange.hpp>
 #include <map>
 #include <list>
 #include <assert.h>
@@ -25,9 +26,9 @@ namespace network
 
 			bool startup(unsigned short port);
 			void shutdown();
-			std::map<uint64_t, std::unique_ptr<message::Message>> process();
-			bool send(uint64_t clientid, const char* data, unsigned int length);
-			bool send(const char* data, unsigned int length);
+			void process(std::map<uint64_t, std::unique_ptr<event::Event>>& events);
+			bool send(uint64_t clientid, const PacketUnit* packet, unsigned int length);
+			bool send(const PacketUnit* packet, unsigned int length);
 
 		private:
 			std::map<uint64_t, Client> clients_;
@@ -94,12 +95,35 @@ namespace network
 			socket_ = INVALID_SOCKET;
 		}
 
-		std::map<uint64_t, std::unique_ptr<message::Message>> Server::ServerImpl::process()
+		void Server::ServerImpl::process(std::map<uint64_t, std::unique_ptr<event::Event>>& events)
 		{
-			std::map<uint64_t, std::unique_ptr<message::Message>> messages;
 			if (socket_ == INVALID_SOCKET)
 			{
-				return messages;
+				return;
+			}
+
+			// Processing message reception & send for each client. 
+			for (auto itClient = clients_.begin(); itClient != clients_.end(); )
+			{
+				auto& client = *itClient;
+				auto event = client.second.process();
+				if (event)
+				{
+					auto id = client.first;
+					if (event->is<event::Disconnection>())
+					{
+						itClient = clients_.erase(itClient);
+					}
+					else
+					{
+						++itClient;
+					}
+					events[id] = std::move(event);
+				}
+				else
+				{
+					++itClient;
+				}
 			}
 
 			// Listening to new clients.
@@ -116,50 +140,27 @@ namespace network
 				Client client;
 				if (client.initialize(std::move(clientSocket)))
 				{
-					clients_[client.id()] = std::move(client);
-					//auto message = std::make_unique<message::Connection>(message::Connection::State::Successfull);
-					//messages[client.id()] = std::move(message);
+					auto id = client.id();
+					auto connection = std::make_unique<event::Connection>(event::Connection::State::Successfull);
+					events[id] = std::move(connection);
+					clients_[id] = std::move(client);
 				}
 			}
 
-			// Processing message reception & send for each client. 
-			for (auto itClient = clients_.begin(); itClient != clients_.end(); )
-			{
-				auto& client = *itClient;
-				auto msg = client.second.process();
-				if (msg)
-				{
-					if (msg->is<message::Disconnection>())
-					{
-						itClient = clients_.erase(itClient);
-					}
-					else
-					{
-						messages[client.first] = std::move(msg);
-						++itClient;
-					}
-				}
-				else
-				{
-					++itClient;
-				}
-			}
-
-			return messages;
 		}
 
-		bool Server::ServerImpl::send(uint64_t clientid, const char* data, unsigned int length)
+		bool Server::ServerImpl::send(uint64_t clientid, const PacketUnit* packet, unsigned int length)
 		{
 			auto itClient = clients_.find(clientid);
-			return itClient != clients_.end() && itClient->second.send(data, length);
+			return itClient != clients_.end() && itClient->second.send(packet, length);
 		}
 
-		bool Server::ServerImpl::send(const char* data, unsigned int length)
+		bool Server::ServerImpl::send(const PacketUnit* packet, unsigned int length)
 		{
 			bool sent = true;
 			for (auto& client : clients_)
 			{
-				sent &= client.second.send(data, length);
+				sent &= client.second.send(packet, length);
 			}
 			return sent;
 		}
@@ -197,19 +198,22 @@ namespace network
 			}
 		}
 
-		std::map<uint64_t, std::unique_ptr<message::Message>> Server::process()
+		void Server::process(std::map<uint64_t, std::unique_ptr<event::Event>>& events)
 		{
-			return impl_ ? impl_->process() : std::map<uint64_t, std::unique_ptr<message::Message>>();
+			if (impl_)
+			{
+				impl_->process(events);
+			}
 		}
 
-		bool Server::send(uint64_t clientid, const char* data, unsigned int length)
+		bool Server::send(uint64_t clientid, const PacketUnit* packet, unsigned int length)
 		{
-			return impl_ ? impl_->send(clientid, data, length) : false;
+			return impl_ ? impl_->send(clientid, packet, length) : false;
 		}
 
-		bool Server::send(const char* data, unsigned int length)
+		bool Server::send(const PacketUnit* packet, unsigned int length)
 		{
-			return impl_ ? impl_->send(data, length) : false;
+			return impl_ ? impl_->send(packet, length) : false;
 		}
 	}
 }

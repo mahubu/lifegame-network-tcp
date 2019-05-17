@@ -9,6 +9,7 @@
 
 namespace network
 {
+	typedef uint8_t PacketUnit;
 	bool startup();
 	void shutdown();
 	void close(SOCKET socket);

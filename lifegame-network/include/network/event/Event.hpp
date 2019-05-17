@@ -2,23 +2,23 @@
 
 namespace network
 {
-	namespace message
+	namespace event
 	{
 		/*
-		* @brief A message template.
+		* @brief An event template.
 		*/
-		class Message
+		class Event
 		{
 		public:
 			/*
-			* @return whether (or not) a message is of the given type.
+			* @return whether (or not) an event is of the given type.
 			*/
 			template<class M> bool is() const
 			{
 				return type == M::STATIC_TYPE;
 			}
 			/*
-			* @return the message as one of the given type.
+			* @return the event as one of the given type.
 			*/
 			template<class M> const M* as() const
 			{
@@ -30,10 +30,10 @@ namespace network
 			{
 				Connection,
 				Disconnection,
-				Raw
+				Exchange
 			};
 
-			Message(Type type) : type(type)
+			Event(Type type) : type(type)
 			{
 			}
 

@@ -1,6 +1,7 @@
 #pragma once
 
-#include <network/message/Message.hpp>
+#include <network/Sockets.hpp>
+#include <network/event/Event.hpp>
 #include <map>
 #include <memory>
 
@@ -38,30 +39,30 @@ namespace network
 			/*
 			* @brief Process message sending & reception for the server.
 			*
-			* @return the received messages, associated with each client. 'nullptr' is no message has been received.
+			* @param the messages to receive, associated with each client.
 			*/
-			std::map<uint64_t, std::unique_ptr<message::Message>> process();
+			void process(std::map<uint64_t, std::unique_ptr<event::Event>>& events);
 
 			/*
-			* @brief Enqueue data to send to a client.
+			* @brief Enqueue a packet to send to a client.
 			*
-			* @param clientid the client to send to.
-			* @param data the data send to send.
-			* @param length the length of data to send.
+			* @param clientid the client.
+			* @param packet the packet.
+			* @param length the length of the packet.
 			*
 			* @return whether (or not) the data can be sent.
 			*/
-			bool send(uint64_t clientid, const char* data, unsigned int length);
+			bool send(uint64_t clientid, const PacketUnit* packet, unsigned int length);
 
 			/*
-			* @brief Enqueue data to send to all clients.
+			* @brief Enqueue a packet to send to all clients.
 			*
-			* @param data the data send to send.
-			* @param length the length of data to send.
+			* @param packet the packet.
+			* @param length the length of the packet.
 			*
 			* @return whether (or not) the data can be sent.
 			*/
-			bool send(const char* data, unsigned int length);
+			bool send(const PacketUnit* packet, unsigned int length);
 
 		private:
 			class ServerImpl;

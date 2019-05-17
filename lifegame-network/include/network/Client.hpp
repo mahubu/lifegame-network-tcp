@@ -1,7 +1,7 @@
 #pragma once
 
 #include <network/Sockets.hpp>
-#include <network/message/Message.hpp>
+#include <network/event/Event.hpp>
 #include <memory>
 #include <string>
 
@@ -25,7 +25,7 @@ namespace network
 			/*
 			* @return the client unique id.
 			*/
-			int64_t id() const;
+			uint64_t id() const;
 
 			/*
 			* @brief Link a socket to the client.
@@ -52,21 +52,21 @@ namespace network
 			void disconnect();
 
 			/*
-			* @brief Enqueue data to send.
+			* @brief Enqueue a packet to be send.
 			*
-			* @param data the data send to send.
-			* @param length the length of data to send.
+			* @param packet the packet.
+			* @param length the length of the packet.
 			*
-			* @return whether (or not) the data can be sent.
+			* @return whether (or not) the packet can be sent.
 			*/
-			bool send(const char* data, unsigned int length);
+			bool send(const PacketUnit* packet, unsigned int length);
 
 			/*
 			* @brief Process message sending & reception for the client.
 			*
 			* @return the received message. 'nullptr' is no message has been received.
 			*/
-			std::unique_ptr<message::Message> process();
+			std::unique_ptr<event::Event> process();
 
 		private:
 			class ClientImpl;

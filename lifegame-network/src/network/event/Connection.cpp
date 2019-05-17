@@ -1,8 +1,8 @@
-#include <network/message/Connection.hpp>
+#include <network/event/Connection.hpp>
 
 namespace network
 {
-	namespace message
+	namespace event
 	{
 		Connection::State Connection::state() const
 		{

@@ -1,8 +1,8 @@
-#include <network/message/Disconnection.hpp>
+#include <network/event/Disconnection.hpp>
 
 namespace network
 {
-	namespace message
+	namespace event
 	{
 		Disconnection::Reason Disconnection::reason() const
 		{

@@ -1,7 +1,9 @@
 #include <network/handler/ReceptionHandler.hpp>
-#include <network/message/Disconnection.hpp>
-#include <network/message/Raw.hpp>
+#include <network/event/Disconnection.hpp>
+#include <network/event/Exchange.hpp>
 #include <assert.h>
+
+#include <iostream>
 
 namespace network
 {
@@ -14,12 +16,12 @@ namespace network
 			prepareHeaderReception();
 		}
 
-		std::unique_ptr<message::Message> ReceptionHandler::receive()
+		std::unique_ptr<event::Event> ReceptionHandler::receive()
 		{
 			assert(socket_ != INVALID_SOCKET);
 			int length = buffer_.size() - received_;
-			char* buffer = buffer_.data() + received_;
-			int received = ::recv(socket_, buffer, length, 0);
+			PacketUnit* buffer = buffer_.data() + received_;
+			int received = ::recv(socket_, reinterpret_cast<char*>(buffer), length, 0);
 			if (received > 0) // Reception.
 			{
 				received_ += received;
@@ -27,7 +29,7 @@ namespace network
 				{
 					if (state_ == State::Body)
 					{
-						std::unique_ptr<message::Message> message = std::make_unique<message::Raw>(std::move(buffer_));
+						std::unique_ptr<event::Event> message = std::make_unique<event::Exchange>(std::move(buffer_));
 						prepareHeaderReception();
 						return message;
 					}
@@ -41,7 +43,7 @@ namespace network
 			}
 			else if (received == 0) // Disconnection.
 			{
-				return std::make_unique<message::Disconnection>(message::Disconnection::Reason::Intentional);
+				return std::make_unique<event::Disconnection>(event::Disconnection::Reason::Intentional);
 			}
 			else // received < 0
 			{
@@ -53,7 +55,7 @@ namespace network
 				}
 				else
 				{
-					return std::make_unique<message::Disconnection>(message::Disconnection::Reason::Lost);
+					return std::make_unique<event::Disconnection>(event::Disconnection::Reason::Lost);
 				}
 			}
 		}

@@ -1,10 +1,10 @@
+#include <network/Sockets.hpp>
 #include <network/Client.hpp>
 #include <network/handler/ConnectionHandler.hpp>
 #include <network/handler/ReceptionHandler.hpp>
 #include <network/handler/SendingHandler.hpp>
-#include <network/message/Disconnection.hpp>
+#include <network/event/Disconnection.hpp>
 #include <assert.h>
-#include <iostream>
 
 namespace network
 {
@@ -33,8 +33,8 @@ namespace network
 			bool initialize(SOCKET&& socket);
 			bool connect(const std::string& address, unsigned short port);
 			void disconnect();
-			bool send(const char* data, unsigned int length);
-			std::unique_ptr<message::Message> process();
+			bool send(const PacketUnit* packet, unsigned int length);
+			std::unique_ptr<event::Event> process();
 
 		private:
 			handler::ConnectionHandler connectionHandler_;
@@ -114,21 +114,21 @@ namespace network
 			state_ = State::Disconnected;
 		}
 
-		bool Client::Client::ClientImpl::send(const char* data, unsigned int length)
+		bool Client::Client::ClientImpl::send(const PacketUnit* packet, unsigned int length)
 		{
-			return sendingHandler_.enqueue(data, length);
+			return sendingHandler_.enqueue(packet, length);
 		}
 
-		std::unique_ptr<message::Message> Client::ClientImpl::process()
+		std::unique_ptr<event::Event> Client::ClientImpl::process()
 		{
 			switch (state_)
 			{
 			case State::Connecting:
 			{
-				auto msg = connectionHandler_.fetch();
-				if (msg)
+				auto event = connectionHandler_.ready();
+				if (event)
 				{
-					if (msg->state() == message::Connection::State::Successfull)
+					if (event->state() == event::Connection::State::Successfull)
 					{
 						sendingHandler_.initialize(socket_);
 						receivingHandler_.initialize(socket_);
@@ -139,17 +139,17 @@ namespace network
 						disconnect();
 					}
 				}
-				return msg;
+				return event;
 			} break;
 			case State::Connected:
 			{
 				sendingHandler_.send();
-				auto msg = receivingHandler_.receive();
-				if (msg && msg->is<message::Disconnection>())
+				auto event = receivingHandler_.receive();
+				if (event && event->is<event::Disconnection>())
 				{
 					disconnect();
 				}
-				return msg;
+				return event;
 			} break;
 			case State::Disconnected:
 			{
@@ -174,8 +174,9 @@ namespace network
 
 		Client::~Client() = default;
 
-		int64_t Client::id() const
+		uint64_t Client::id() const
 		{
+			// TODO unsigned -1 ???? -> use int64_t instead
 			return impl_ ? impl_->id() : (uint64_t)(-1);
 		}
 
@@ -205,12 +206,12 @@ namespace network
 			impl_.reset();
 		}
 
-		bool Client::send(const char* data, unsigned int length)
+		bool Client::send(const PacketUnit* packet, unsigned int length)
 		{
-			return impl_ && impl_->send(data, length);
+			return impl_ && impl_->send(packet, length);
 		}
 
-		std::unique_ptr<message::Message> Client::process()
+		std::unique_ptr<event::Event> Client::process()
 		{
 			return impl_ ? impl_->process() : nullptr;
 		}

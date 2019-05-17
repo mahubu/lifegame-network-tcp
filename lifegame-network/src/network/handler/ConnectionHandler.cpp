@@ -27,27 +27,27 @@ namespace network
 			return true;
 		}
 
-		std::unique_ptr<message::Connection> ConnectionHandler::fetch()
+		std::unique_ptr<event::Connection> ConnectionHandler::ready()
 		{
 			int result = ::poll(&descriptor_, 1, 0);
 			if (result < 0)
 			{
-				return std::make_unique<message::Connection>(message::Connection::State::Failed);
+				return std::make_unique<event::Connection>(event::Connection::State::Failed);
 			}
 			else if (result > 0)
 			{
 				short revents = descriptor_.revents;
 				if (revents & POLLOUT)
 				{
-					return std::make_unique<message::Connection>(message::Connection::State::Successfull);
+					return std::make_unique<event::Connection>(event::Connection::State::Successfull);
 				}
 				else if (revents & (POLLHUP | POLLNVAL))
 				{
-					return std::make_unique<message::Connection>(message::Connection::State::Failed);
+					return std::make_unique<event::Connection>(event::Connection::State::Failed);
 				}
 				else if (revents & POLLERR)
 				{
-					return std::make_unique<message::Connection>(message::Connection::State::Failed);
+					return std::make_unique<event::Connection>(event::Connection::State::Failed);
 				}
 				return nullptr;
 			}

@@ -15,12 +15,12 @@ namespace network
 			socket_ = socket;
 		}
 
-		bool SendingHandler::enqueue(const char* data, unsigned int length)
+		bool SendingHandler::enqueue(const PacketUnit* packet, unsigned int length)
 		{
 			if (length > (std::numeric_limits<tcp::HeaderType>::max)()) {
 				return false;
 			}
-			queueingBuffers_.emplace_back(data, data + length);
+			queueingBuffers_.emplace_back(packet, packet + length);
 			return true;
 		}
 
@@ -59,7 +59,7 @@ namespace network
 			}
 
 			// Send data based on previous send.
-			int sent = ::send(socket_, sendingBuffer_.data(), sendingBuffer_.size(), 0);
+			int sent = ::send(socket_, reinterpret_cast<const char*>(sendingBuffer_.data()), sendingBuffer_.size(), 0);
 			if (sent > 0)
 			{
 				if (sent == sendingBuffer_.size())
@@ -103,7 +103,7 @@ namespace network
 				queueingBuffers_.cbegin(),
 				queueingBuffers_.cend(),
 				static_cast<size_t>(0),
-				[](size_t n, const std::vector<char> & queuedItem) {
+				[](size_t n, const std::vector<PacketUnit> & queuedItem) {
 					return n + queuedItem.size() + tcp::HeaderSize;
 				}
 			);

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <network/Sockets.hpp>
-#include <network/message/Message.hpp>
+#include <network/event/Event.hpp>
 #include <list>
 #include <vector>
 
@@ -35,14 +35,14 @@ namespace network
 			void initialize(SOCKET socket);
 
 			/*
-			* @brief Enqueue data to send.
+			* @brief Enqueue a packet to be send.
 			*
-			* @param data the data send to send.
-			* @param length the length of data to send.
+			* @param packet the packet.
+			* @param length the length of the packet.
 			*
 			* @return whether (or not) the data can be sent.
 			*/
-			bool enqueue(const char* data, unsigned int length);
+			bool enqueue(const PacketUnit* packet, unsigned int length);
 
 			/*
 			* @brief Send the enqueued data.
@@ -60,8 +60,8 @@ namespace network
 			void prepareHeaderSending();
 			void prepareBodySending();
 
-			std::list<std::vector<char>> queueingBuffers_;
-			std::vector<char> sendingBuffer_;
+			std::list<std::vector<PacketUnit>> queueingBuffers_;
+			std::vector<PacketUnit> sendingBuffer_;
 			SOCKET socket_ = INVALID_SOCKET;
 			State state_ = State::Idle;
 
