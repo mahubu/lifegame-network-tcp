@@ -174,10 +174,9 @@ namespace network
 
 		Client::~Client() = default;
 
-		uint64_t Client::id() const
+		int64_t Client::id() const
 		{
-			// TODO unsigned -1 ???? -> use int64_t instead
-			return impl_ ? impl_->id() : (uint64_t)(-1);
+			return impl_ ? impl_->id() : (int64_t)(-1);
 		}
 
 		bool Client::initialize(SOCKET && socket) {

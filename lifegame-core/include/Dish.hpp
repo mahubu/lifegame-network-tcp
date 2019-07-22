@@ -64,7 +64,10 @@ namespace lifegame
 	private:
 		uint8_t rows_;
 		uint8_t columns_;
-		// TODO use std::vector instead ?
+		/*
+		* Modern C++ will use stdd:vector and/or std:array.
+		* Raw pointers are used here for self-teaching goals.
+		*/
 		Cell** dish_;
 
 		/**

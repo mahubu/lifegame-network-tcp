@@ -13,14 +13,14 @@ namespace network
 			/*
 			* @return whether (or not) an event is of the given type.
 			*/
-			template<class M> bool is() const
+			template<typename M> bool is() const
 			{
 				return type == M::STATIC_TYPE;
 			}
 			/*
 			* @return the event as one of the given type.
 			*/
-			template<class M> const M* as() const
+			template<typename M> const M* as() const
 			{
 				return static_cast<const M*>(this);
 			}

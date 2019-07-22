@@ -9,7 +9,7 @@
 
 namespace network
 {
-	typedef uint8_t PacketUnit;
+	using PacketUnit = uint8_t;
 	bool startup();
 	void shutdown();
 	void close(SOCKET socket);
@@ -19,7 +19,7 @@ namespace network
 		int latest();
 	}
 	namespace tcp {
-		typedef uint16_t HeaderType;
+		using HeaderType = uint16_t;
 		static const unsigned int HeaderSize = sizeof(HeaderType);
 	}
 }

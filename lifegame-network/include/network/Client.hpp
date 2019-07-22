@@ -25,7 +25,7 @@ namespace network
 			/*
 			* @return the client unique id.
 			*/
-			uint64_t id() const;
+			int64_t id() const;
 
 			/*
 			* @brief Link a socket to the client.
